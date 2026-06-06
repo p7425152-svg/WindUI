@@ -1,0 +1,88 @@
+-- Block Spin Auto Farm Script (ATM Hack + Planting + Harvest + Auto Deposit)
+-- Execute ด้วย Executor
+
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+
+_G.AutoATM = true
+_G.AutoPlant = true
+_G.AutoHarvest = true
+_G.AutoDeposit = true
+_G.DepositThreshold = 10000  -- ฝากเมื่อเงินถึงจำนวนนี้
+
+print("🚀 Block Spin Farm Script เริ่มทำงาน!")
+
+-- Auto Hack ATM
+spawn(function()
+    while _G.AutoATM do
+        pcall(function()
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if obj.Name:lower():find("atm") or obj.Name:lower():find("teller") then
+                    -- ปรับตาม Remote จริงของเกม (ใช้ Remote Spy ช่วย)
+                    local args = {
+                        [1] = "Hack",
+                        [2] = obj
+                    }
+                    game:GetService("ReplicatedStorage"):FindFirstChild("ATMEvent") or game:GetService("ReplicatedStorage").Remotes.ATM:FireServer(unpack(args))
+                    wait(1.5) -- Cooldown
+                end
+            end
+        end)
+        wait(2)
+    end
+end)
+
+-- Auto ปลูกต้นไม้/ดอกไม้
+spawn(function()
+    while _G.AutoPlant do
+        pcall(function()
+            -- หา Plot ที่เช่าได้ (บ้านต่าง ๆ)
+            for _, plot in pairs(workspace.Houses or workspace.Plots:GetChildren()) do
+                if plot:FindFirstChild("Soil") and not plot:FindFirstChild("Plant") and not plot:FindFirstChild("Tree") then
+                    game:GetService("ReplicatedStorage").Remotes.PlantSeed:FireServer("Sunflower", plot) -- หรือ "OrganicTree"
+                    wait(0.8)
+                end
+            end
+        end)
+        wait(3)
+    end
+end)
+
+-- Auto เก็บเกี่ยว
+spawn(function()
+    while _G.AutoHarvest do
+        pcall(function()
+            for _, plant in pairs(workspace:GetDescendants()) do
+                if plant.Name:lower():find("sunflower") or plant.Name:lower():find("tree") or plant.Name:lower():find("plant") then
+                    if plant:FindFirstChild("HarvestPrompt") or plant:FindFirstChild("ProximityPrompt") then
+                        fireproximityprompt(plant.HarvestPrompt or plant.ProximityPrompt)
+                        wait(0.5)
+                    end
+                end
+            end
+        end)
+        wait(2)
+    end
+end)
+
+-- Auto ฝากเงิน
+spawn(function()
+    while _G.AutoDeposit do
+        pcall(function()
+            if player.leaderstats and player.leaderstats:FindFirstChild("Money") and player.leaderstats.Money.Value >= _G.DepositThreshold then
+                for _, atm in pairs(workspace:GetDescendants()) do
+                    if atm.Name:lower():find("atm") then
+                        local args = {["Action"] = "Deposit", ["Amount"] = "All"}
+                        game:GetService("ReplicatedStorage").Remotes.ATMEvent:FireServer(unpack(args))
+                        print("💰 ฝากเงินอัตโนมัติสำเร็จ!")
+                        break
+                    end
+                end
+            end
+        end)
+        wait(5)
+    end
+end)
+
+-- Toggle ง่าย ๆ (แก้ไข _G. ได้เลย)
+print("✅ เปิด/ปิด ด้วยการแก้ _G.AutoATM = false เป็นต้นไป")
